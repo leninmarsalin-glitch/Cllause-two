@@ -29,19 +29,43 @@ let currentFilter = 'all';
 // ============================================================
 // CLOUDINARY IMAGE UPLOAD
 // ============================================================
-async function uploadImageToCloudinary(file) {
-  const formData = new FormData();
-  formData.append('file', file);
-  formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+async function compressImage(file) {
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        let width = img.width;
+        let height = img.height;
+        const MAX = 800;
+        if (width > MAX) { height = Math.round(height * MAX / width); width = MAX; }
+        if (height > MAX) { width = Math.round(width * MAX / height); height = MAX; }
+        canvas.width = width;
+        canvas.height = height;
+        canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+        canvas.toBlob((blob) => {
+          resolve(new File([blob], file.name, { type: 'image/jpeg' }));
+        }, 'image/jpeg', 0.75);
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
 
+async function uploadImageToCloudinary(file) {
+  const compressedFile = await compressImage(file);
+  const formData = new FormData();
+  formData.append('file', compressedFile);
+  formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
   const response = await fetch(
     `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`,
     { method: 'POST', body: formData }
   );
-
   if (!response.ok) throw new Error('Image upload failed');
   const data = await response.json();
-  return data.secure_url; // This is the image URL we save in Firebase
+  return data.secure_url;
 }
 
 // ============================================================
