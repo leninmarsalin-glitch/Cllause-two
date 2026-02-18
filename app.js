@@ -99,7 +99,7 @@ async function deleteProductFromFirebase(productId) {
 }
 
 // ============================================================
-// RENDER PRODUCTS — FIXED: div now uses class="product-image"
+// RENDER PRODUCTS
 // ============================================================
 function renderProducts(productsToShow) {
   const grid = document.getElementById('productsGrid');
@@ -120,12 +120,12 @@ function renderProducts(productsToShow) {
         <img 
           src="${product.image}" 
           alt="${product.name}"
-          class="lazy-image"
-          loading="lazy"
+          style="width:100%;height:100%;object-fit:cover;"
+          onload="this.style.opacity='1'"
           onerror="this.src='https://via.placeholder.com/400x500?text=No+Image'"
         />
         <div class="product-overlay">
-          <button class="quick-view-btn" onclick="addToCart('${product.id}')">Add to Cart</button>
+          <button class="quick-view-btn" onclick="window.addToCart('${product.id}')">Add to Cart</button>
         </div>
       </div>
       <div class="product-info">
