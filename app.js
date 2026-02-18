@@ -224,12 +224,12 @@ window.removeFromCart = function removeFromCart(productId) {
 }
 
 function showCartSidebar() {
-  document.getElementById('cartSidebar')?.classList.add('open');
+  document.getElementById('cartSidebar')?.classList.add('active');
 }
 
 document.getElementById('cartToggle')?.addEventListener('click', showCartSidebar);
 document.getElementById('closeCart')?.addEventListener('click', () => {
-  document.getElementById('cartSidebar')?.classList.remove('open');
+  document.getElementById('cartSidebar')?.classList.remove('active');
 });
 
 // ============================================================
