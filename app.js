@@ -170,7 +170,7 @@ document.querySelectorAll('.filter-btn').forEach(btn => {
 // ============================================================
 // CART FUNCTIONS
 // ============================================================
-function addToCart(productId) {
+window.addToCart = function addToCart(productId) {
   const product = products.find(p => p.id === productId);
   if (!product) return;
 
@@ -217,7 +217,7 @@ function updateCartUI() {
   }
 }
 
-function removeFromCart(productId) {
+window.removeFromCart = function removeFromCart(productId) {
   cart = cart.filter(item => item.id !== productId);
   localStorage.setItem('cart', JSON.stringify(cart));
   updateCartUI();
@@ -297,7 +297,7 @@ function createAdminPanel() {
   document.body.appendChild(panel);
 }
 
-async function submitProduct() {
+window.submitProduct = async function submitProduct() {
   const name = document.getElementById('adminName')?.value.trim();
   const category = document.getElementById('adminCategory')?.value;
   const price = document.getElementById('adminPrice')?.value;
