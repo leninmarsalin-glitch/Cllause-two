@@ -418,3 +418,16 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }, 3000);
 });
+
+// WhatsApp Checkout
+document.getElementById('checkoutBtn')?.addEventListener('click', () => {
+  if (cart.length === 0) {
+    alert('Your cart is empty!');
+    return;
+  }
+  const orderLines = cart.map(item => "* " + item.quantity + "x " + item.name + " @ Rs." + item.price).join('\n');
+  const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+  const message = "Hello! I would like to place an order:\n\n" + orderLines + "\n\nTotal: Rs." + total + "\n\nPlease confirm my order. Thank you!";
+  const whatsappUrl = "https://wa.me/917902803571?text=" + encodeURIComponent(message);
+  window.open(whatsappUrl, '_blank');
+});
