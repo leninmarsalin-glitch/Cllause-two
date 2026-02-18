@@ -99,7 +99,7 @@ async function deleteProductFromFirebase(productId) {
 }
 
 // ============================================================
-// RENDER PRODUCTS
+// RENDER PRODUCTS — FIXED: div now uses class="product-image"
 // ============================================================
 function renderProducts(productsToShow) {
   const grid = document.getElementById('productsGrid');
@@ -116,11 +116,11 @@ function renderProducts(productsToShow) {
 
   grid.innerHTML = filtered.map(product => `
     <div class="product-card" data-id="${product.id}">
-      <div class="product-image-wrapper">
+      <div class="product-image">
         <img 
           src="${product.image}" 
           alt="${product.name}"
-          class="product-image lazy-image"
+          class="lazy-image"
           loading="lazy"
           onerror="this.src='https://via.placeholder.com/400x500?text=No+Image'"
         />
