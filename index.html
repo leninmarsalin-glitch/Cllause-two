@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -309,15 +310,15 @@
             <div class="section-header">
                 <span class="section-label">Our Collection</span>
                 <h2 class="section-title">Premium Selection</h2>
-                <p class="section-subtitle">24 exclusive pieces - Performance testing mode</p>
+                <p class="section-subtitle">Browse our exclusive collection</p>
             </div>
             <div class="filters">
-                <button class="filter-btn active" data-category="all">All (24)</button>
-                <button class="filter-btn" data-category="shirts">Shirts (5)</button>
-                <button class="filter-btn" data-category="dresses">Dresses (5)</button>
-                <button class="filter-btn" data-category="pants">Pants (5)</button>
-                <button class="filter-btn" data-category="jackets">Jackets (5)</button>
-                <button class="filter-btn" data-category="accessories">Accessories (4)</button>
+                <button class="filter-btn active" data-category="all">All</button>
+                <button class="filter-btn" data-category="shirts">Shirts</button>
+                <button class="filter-btn" data-category="dresses">Dresses</button>
+                <button class="filter-btn" data-category="pants">Pants</button>
+                <button class="filter-btn" data-category="jackets">Jackets</button>
+                <button class="filter-btn" data-category="accessories">Accessories</button>
             </div>
         </div>
     </section>
@@ -326,7 +327,7 @@
     <section class="products">
         <div class="container">
             <div class="products-grid" id="productsGrid">
-                <!-- Products will be dynamically inserted here -->
+                <!-- Products will be dynamically loaded from Firebase -->
             </div>
         </div>
     </section>
@@ -474,7 +475,7 @@
                 </div>
             </div>
             <div class="footer-bottom">
-                <p>&copy; 2024 Élégance. All rights reserved. | Performance Testing Version</p>
+                <p>&copy; 2024 Élégance. All rights reserved.</p>
             </div>
         </div>
     </footer>
@@ -500,60 +501,58 @@
         </svg>
     </a>
 
-    <script src="app.js"></script>
+    <!-- ✅ UPDATED: type="module" added so Firebase imports work -->
+    <script type="module" src="app.js"></script>
+
     <script>
-// Performance Dashboard Toggle
-const perfToggle = document.getElementById('perfToggle');
-const perfDashboard = document.getElementById('performanceDashboard');
+        // Performance Dashboard Toggle
+        const perfToggle = document.getElementById('perfToggle');
+        const perfDashboard = document.getElementById('performanceDashboard');
 
-perfToggle?.addEventListener('click', () => {
-    perfDashboard.classList.toggle('show');
-});
+        perfToggle?.addEventListener('click', () => {
+            perfDashboard.classList.toggle('show');
+        });
 
-// Service Worker Registration with GitHub Pages path
-if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-        const swPath = '/Cllause-two/service-worker.js';
-        
-        navigator.serviceWorker.register(swPath)
-            .then(registration => {
-                console.log('✅ ServiceWorker registered:', registration.scope);
-                
-                setInterval(() => {
-                    registration.update();
-                }, 3600000);
-            })
-            .catch(err => {
-                console.log('❌ ServiceWorker registration failed:', err);
+        // Service Worker Registration
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                const swPath = '/Cllause-two/service-worker.js';
+                navigator.serviceWorker.register(swPath)
+                    .then(registration => {
+                        console.log('✅ ServiceWorker registered:', registration.scope);
+                        setInterval(() => { registration.update(); }, 3600000);
+                    })
+                    .catch(err => {
+                        console.log('❌ ServiceWorker registration failed:', err);
+                    });
             });
-    });
-}
+        }
 
-// Install prompt handling
-let deferredPrompt;
-const installPrompt = document.getElementById('installPrompt');
-const installBtn = document.getElementById('installBtn');
-const closeInstall = document.getElementById('closeInstall');
+        // Install prompt handling
+        let deferredPrompt;
+        const installPrompt = document.getElementById('installPrompt');
+        const installBtn = document.getElementById('installBtn');
+        const closeInstall = document.getElementById('closeInstall');
 
-window.addEventListener('beforeinstallprompt', (e) => {
-    e.preventDefault();
-    deferredPrompt = e;
-    installPrompt?.classList.add('show');
-});
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            installPrompt?.classList.add('show');
+        });
 
-installBtn?.addEventListener('click', async () => {
-    if (deferredPrompt) {
-        deferredPrompt.prompt();
-        const { outcome } = await deferredPrompt.userChoice;
-        console.log(`User response: ${outcome}`);
-        deferredPrompt = null;
-        installPrompt?.classList.remove('show');
-    }
-});
+        installBtn?.addEventListener('click', async () => {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                const { outcome } = await deferredPrompt.userChoice;
+                console.log(`User response: ${outcome}`);
+                deferredPrompt = null;
+                installPrompt?.classList.remove('show');
+            }
+        });
 
-closeInstall?.addEventListener('click', () => {
-    installPrompt?.classList.remove('show');
-});
-</script>
+        closeInstall?.addEventListener('click', () => {
+            installPrompt?.classList.remove('show');
+        });
+    </script>
 </body>
 </html>
