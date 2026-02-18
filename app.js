@@ -13,7 +13,7 @@ const firebaseConfig = {
   appId: "1:715697643204:web:f6fb924b44ddc3a4cc3391"
 };
 
-const CLOUDINARY_CLOUD_NAME = "dyibupklz";
+const CLOUDINARY_CLOUD_NAME = "dylbupklz";
 const CLOUDINARY_UPLOAD_PRESET = "apparel_uploads";
 
 const app = initializeApp(firebaseConfig);
