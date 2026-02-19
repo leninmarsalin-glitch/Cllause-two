@@ -165,7 +165,7 @@ function renderProducts(productsToShow) {
           <span class="product-price">₹${parseFloat(product.price).toLocaleString('en-IN')}</span>
           <button class="add-to-cart" onclick="window.addToCart('${product.id}')">Add to Cart</button>
         </div>
-        <button onclick="window.deleteProduct('${product.id}')" style="margin:10px 25px;padding:8px 15px;background:#ff4444;color:white;border:none;border-radius:4px;font-size:12px;cursor:pointer;width:calc(100% - 50px);">🗑 Delete Product</button>
+        ${isAdminLoggedIn ? `<button onclick="window.deleteProduct('${product.id}')" style="margin:10px 25px;padding:8px 15px;background:#ff4444;color:white;border:none;border-radius:4px;font-size:12px;cursor:pointer;width:calc(100% - 50px);">🗑 Delete Product</button>` : ""}
       </div>
     </div>
   `).join('');
@@ -372,8 +372,49 @@ window.submitProduct = async function submitProduct() {
 }
 
 // Add admin button (bottom left, only visible to you)
-function addAdminButton() {
+// Admin password - change this to your own secret password!
+const ADMIN_PASSWORD = 'shopapp2024';
+let isAdminLoggedIn = false;
+
+function showAdminLogin() {
+  const loginDiv = document.createElement('div');
+  loginDiv.id = 'adminLogin';
+  loginDiv.style.cssText = `
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.8); z-index: 99999;
+    display: flex; align-items: center; justify-content: center;
+  `;
+  loginDiv.innerHTML = `
+    <div style="background:white; border-radius:16px; padding:2rem; width:90%; max-width:350px; text-align:center;">
+      <h2 style="font-family:'Cormorant Garamond',serif; font-size:1.8rem; margin-bottom:1.5rem;">Admin Login</h2>
+      <input id="adminPasswordInput" type="password" placeholder="Enter password" style="width:100%;padding:0.8rem;border:1px solid #ddd;border-radius:8px;font-size:1rem;margin-bottom:1rem;">
+      <button onclick="checkAdminPassword()" style="width:100%;padding:1rem;background:#1a1a1a;color:white;border:none;border-radius:8px;font-size:1rem;font-weight:600;cursor:pointer;margin-bottom:0.5rem;">Login</button>
+      <button onclick="document.getElementById('adminLogin').remove()" style="width:100%;padding:0.8rem;background:#f0f0f0;color:#666;border:none;border-radius:8px;font-size:0.9rem;cursor:pointer;">Cancel</button>
+      <p id="loginError" style="color:red;margin-top:0.5rem;font-size:0.9rem;"></p>
+    </div>
+  `;
+  document.body.appendChild(loginDiv);
+  document.getElementById('adminPasswordInput').focus();
+  document.getElementById('adminPasswordInput').addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') checkAdminPassword();
+  });
+}
+
+window.checkAdminPassword = function() {
+  const input = document.getElementById('adminPasswordInput')?.value;
+  if (input === ADMIN_PASSWORD) {
+    isAdminLoggedIn = true;
+    document.getElementById('adminLogin')?.remove();
+    showAdminControls();
+  } else {
+    document.getElementById('loginError').textContent = 'Wrong password! Try again.';
+  }
+}
+
+function showAdminControls() {
+  // Show Add Product button
   const btn = document.createElement('button');
+  btn.id = 'addProductBtn';
   btn.textContent = '+ Add Product';
   btn.style.cssText = `
     position: fixed; bottom: 20px; left: 20px; z-index: 9999;
@@ -384,6 +425,49 @@ function addAdminButton() {
   `;
   btn.onclick = createAdminPanel;
   document.body.appendChild(btn);
+
+  // Show logout button
+  const logoutBtn = document.createElement('button');
+  logoutBtn.textContent = 'Logout';
+  logoutBtn.style.cssText = `
+    position: fixed; bottom: 20px; left: 160px; z-index: 9999;
+    background: #ff4444; color: white; border: none;
+    padding: 0.8rem 1.5rem; border-radius: 50px;
+    font-size: 0.9rem; font-weight: 600; cursor: pointer;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+  `;
+  logoutBtn.onclick = () => {
+    isAdminLoggedIn = false;
+    document.getElementById('addProductBtn')?.remove();
+    logoutBtn.remove();
+    // Re-render products to hide delete buttons
+    renderProducts(products);
+  };
+  document.body.appendChild(logoutBtn);
+
+  // Re-render products to show delete buttons
+  renderProducts(products);
+}
+
+function addAdminButton() {
+  // Secret tap: tap bottom-left corner 5 times to show login
+  let tapCount = 0;
+  let tapTimer;
+  const secretArea = document.createElement('div');
+  secretArea.style.cssText = `
+    position: fixed; bottom: 0; left: 0; width: 60px; height: 60px;
+    z-index: 9998; cursor: default;
+  `;
+  secretArea.addEventListener('click', () => {
+    tapCount++;
+    clearTimeout(tapTimer);
+    tapTimer = setTimeout(() => { tapCount = 0; }, 2000);
+    if (tapCount >= 5) {
+      tapCount = 0;
+      if (!isAdminLoggedIn) showAdminLogin();
+    }
+  });
+  document.body.appendChild(secretArea);
 }
 
 // ============================================================
