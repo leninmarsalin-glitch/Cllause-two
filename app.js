@@ -111,6 +111,11 @@ async function addProductToFirebase(productData) {
 // ============================================================
 // FIREBASE - DELETE PRODUCT
 // ============================================================
+window.deleteProduct = async function(productId) {
+  if (!confirm('Are you sure you want to delete this product?')) return;
+  await deleteProductFromFirebase(productId);
+}
+
 async function deleteProductFromFirebase(productId) {
   try {
     await deleteDoc(doc(db, "products", productId));
@@ -158,8 +163,9 @@ function renderProducts(productsToShow) {
         <p class="product-description">${product.description || ''}</p>
         <div class="product-footer">
           <span class="product-price">₹${parseFloat(product.price).toLocaleString('en-IN')}</span>
-          <button class="add-to-cart" onclick="addToCart('${product.id}')">Add to Cart</button>
+          <button class="add-to-cart" onclick="window.addToCart('${product.id}')">Add to Cart</button>
         </div>
+        <button onclick="window.deleteProduct('${product.id}')" style="margin:10px 25px;padding:8px 15px;background:#ff4444;color:white;border:none;border-radius:4px;font-size:12px;cursor:pointer;width:calc(100% - 50px);">🗑 Delete Product</button>
       </div>
     </div>
   `).join('');
