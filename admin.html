@@ -1,0 +1,728 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spice Garden — Admin Panel</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0f0800;
+            --surface: #1c1005;
+            --card: #221508;
+            --accent: #e8621a;
+            --accent2: #f5a623;
+            --text: #f5ede0;
+            --muted: #a08060;
+            --border: #3a2010;
+            --success: #4caf50;
+            --danger: #e53935;
+            --veg: #4caf50;
+            --nonveg: #e53935;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+        /* LOGIN */
+        .login-screen { position: fixed; inset: 0; background: var(--bg); display: flex; align-items: center; justify-content: center; z-index: 9999; }
+        .login-box { background: var(--surface); border: 1px solid var(--border); border-radius: 20px; padding: 40px; width: 360px; text-align: center; }
+        .login-box h1 { font-family: 'Playfair Display', serif; font-size: 1.8rem; color: var(--accent2); margin-bottom: 6px; }
+        .login-box p { color: var(--muted); font-size: .9rem; margin-bottom: 28px; }
+        .login-box input { width: 100%; padding: 12px 16px; background: var(--card); border: 1px solid var(--border); border-radius: 10px; color: var(--text); font-family: 'DM Sans', sans-serif; font-size: .95rem; outline: none; margin-bottom: 12px; transition: border-color .2s; }
+        .login-box input:focus { border-color: var(--accent); }
+        .login-btn { width: 100%; padding: 13px; background: var(--accent); color: white; border: none; border-radius: 10px; font-size: 1rem; font-weight: 600; cursor: pointer; font-family: 'DM Sans', sans-serif; transition: background .2s; }
+        .login-btn:hover { background: #c94e0d; }
+        .login-error { color: var(--danger); font-size: .85rem; margin-top: 10px; display: none; }
+
+        /* LAYOUT */
+        .admin-layout { display: flex; min-height: 100vh; }
+
+        /* SIDEBAR */
+        .sidebar { width: 240px; background: var(--surface); border-right: 1px solid var(--border); display: flex; flex-direction: column; position: fixed; top: 0; left: 0; height: 100vh; z-index: 100; }
+        .sidebar-logo { padding: 24px 20px 20px; border-bottom: 1px solid var(--border); }
+        .sidebar-logo h2 { font-family: 'Playfair Display', serif; font-size: 1.2rem; color: var(--accent2); }
+        .sidebar-logo span { font-size: .7rem; color: var(--muted); letter-spacing: 2px; text-transform: uppercase; }
+        .sidebar-nav { flex: 1; padding: 16px 12px; display: flex; flex-direction: column; gap: 4px; }
+        .nav-item { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-radius: 10px; cursor: pointer; color: var(--muted); font-size: .9rem; font-weight: 500; transition: all .2s; border: none; background: none; width: 100%; text-align: left; }
+        .nav-item:hover { background: var(--card); color: var(--text); }
+        .nav-item.active { background: rgba(232,98,26,0.15); color: var(--accent); }
+        .nav-item svg { flex-shrink: 0; }
+        .sidebar-footer { padding: 16px 12px; border-top: 1px solid var(--border); }
+        .preview-btn { display: flex; align-items: center; gap: 8px; padding: 10px 14px; background: rgba(232,98,26,0.15); color: var(--accent); border: 1px solid rgba(232,98,26,0.3); border-radius: 10px; cursor: pointer; font-size: .88rem; font-weight: 600; width: 100%; font-family: 'DM Sans', sans-serif; transition: all .2s; }
+        .preview-btn:hover { background: var(--accent); color: white; border-color: var(--accent); }
+        .logout-btn { display: flex; align-items: center; gap: 8px; padding: 10px 14px; background: none; color: var(--muted); border: none; border-radius: 10px; cursor: pointer; font-size: .88rem; width: 100%; font-family: 'DM Sans', sans-serif; margin-top: 6px; transition: color .2s; }
+        .logout-btn:hover { color: var(--danger); }
+
+        /* MAIN */
+        .main-content { margin-left: 240px; flex: 1; padding: 28px; }
+
+        /* TOPBAR */
+        .topbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 28px; }
+        .topbar h1 { font-family: 'Playfair Display', serif; font-size: 1.8rem; }
+        .topbar-right { display: flex; align-items: center; gap: 12px; }
+
+        /* STATS */
+        .stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 28px; }
+        .stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 20px; }
+        .stat-card .stat-label { font-size: .8rem; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
+        .stat-card .stat-value { font-family: 'Playfair Display', serif; font-size: 2rem; color: var(--accent2); font-weight: 700; }
+        .stat-card .stat-sub { font-size: .8rem; color: var(--muted); margin-top: 4px; }
+
+        /* PANEL SECTIONS */
+        .panel { display: none; }
+        .panel.active { display: block; }
+
+        /* ADD ITEM FORM */
+        .form-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 28px; margin-bottom: 24px; }
+        .form-card h3 { font-family: 'Playfair Display', serif; font-size: 1.3rem; margin-bottom: 20px; display: flex; align-items: center; gap: 8px; }
+        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+        .form-grid.three { grid-template-columns: 1fr 1fr 1fr; }
+        .form-full { grid-column: 1 / -1; }
+        .field-label { font-size: .82rem; color: var(--muted); font-weight: 600; margin-bottom: 6px; text-transform: uppercase; letter-spacing: .5px; }
+        .field-input { width: 100%; padding: 11px 14px; background: var(--card); border: 1px solid var(--border); border-radius: 10px; color: var(--text); font-family: 'DM Sans', sans-serif; font-size: .92rem; outline: none; transition: border-color .2s; }
+        .field-input:focus { border-color: var(--accent); }
+        .field-input::placeholder { color: var(--muted); }
+        select.field-input option { background: var(--card); }
+        textarea.field-input { resize: vertical; min-height: 80px; }
+        .veg-toggle { display: flex; gap: 10px; }
+        .veg-opt { flex: 1; padding: 10px; border-radius: 10px; border: 2px solid var(--border); background: transparent; color: var(--muted); cursor: pointer; font-size: .88rem; font-weight: 600; font-family: 'DM Sans', sans-serif; transition: all .2s; text-align: center; }
+        .veg-opt.veg-selected { border-color: var(--veg); background: rgba(76,175,80,0.1); color: var(--veg); }
+        .veg-opt.nonveg-selected { border-color: var(--nonveg); background: rgba(229,57,53,0.1); color: var(--nonveg); }
+        .addon-builder { display: flex; flex-direction: column; gap: 8px; }
+        .addon-row { display: flex; gap: 8px; align-items: center; }
+        .addon-row .field-input { flex: 1; }
+        .addon-row .field-input.price-input { width: 100px; flex: none; }
+        .remove-addon { background: rgba(229,57,53,0.1); border: 1px solid rgba(229,57,53,0.3); color: var(--danger); width: 32px; height: 32px; border-radius: 8px; cursor: pointer; font-size: 1.1rem; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: background .2s; }
+        .remove-addon:hover { background: rgba(229,57,53,0.2); }
+        .add-addon-btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; background: transparent; border: 1px dashed var(--border); color: var(--muted); border-radius: 8px; cursor: pointer; font-size: .85rem; font-family: 'DM Sans', sans-serif; transition: all .2s; margin-top: 4px; }
+        .add-addon-btn:hover { border-color: var(--accent); color: var(--accent); }
+        .form-actions { display: flex; gap: 10px; margin-top: 20px; }
+        .btn-save { padding: 12px 28px; background: var(--accent); color: white; border: none; border-radius: 10px; font-size: .95rem; font-weight: 600; cursor: pointer; font-family: 'DM Sans', sans-serif; transition: background .2s; display: flex; align-items: center; gap: 8px; }
+        .btn-save:hover { background: #c94e0d; }
+        .btn-cancel { padding: 12px 20px; background: transparent; color: var(--muted); border: 1px solid var(--border); border-radius: 10px; font-size: .95rem; cursor: pointer; font-family: 'DM Sans', sans-serif; transition: all .2s; }
+        .btn-cancel:hover { border-color: var(--muted); color: var(--text); }
+
+        /* MENU LIST */
+        .menu-toolbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 12px; }
+        .search-box { display: flex; align-items: center; gap: 8px; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 8px 14px; }
+        .search-box input { background: none; border: none; color: var(--text); font-family: 'DM Sans', sans-serif; font-size: .9rem; outline: none; width: 200px; }
+        .search-box input::placeholder { color: var(--muted); }
+        .cat-filter { display: flex; gap: 7px; flex-wrap: wrap; }
+        .cat-pill { padding: 7px 14px; border-radius: 50px; border: 1px solid var(--border); background: transparent; color: var(--muted); cursor: pointer; font-size: .82rem; font-family: 'DM Sans', sans-serif; transition: all .2s; }
+        .cat-pill.active { background: var(--accent); border-color: var(--accent); color: white; }
+        .add-item-btn { display: flex; align-items: center; gap: 8px; padding: 10px 20px; background: var(--accent); color: white; border: none; border-radius: 10px; font-size: .9rem; font-weight: 600; cursor: pointer; font-family: 'DM Sans', sans-serif; transition: background .2s; }
+        .add-item-btn:hover { background: #c94e0d; }
+        .menu-list { display: flex; flex-direction: column; gap: 10px; }
+        .menu-item-row { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 16px 18px; display: flex; align-items: center; gap: 16px; transition: border-color .2s; }
+        .menu-item-row:hover { border-color: rgba(232,98,26,0.3); }
+        .item-emoji { font-size: 2.2rem; width: 50px; text-align: center; flex-shrink: 0; }
+        .item-details { flex: 1; min-width: 0; }
+        .item-name { font-weight: 600; font-size: 1rem; margin-bottom: 3px; }
+        .item-meta { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+        .item-cat { font-size: .75rem; text-transform: uppercase; letter-spacing: 1px; color: var(--accent); font-weight: 600; }
+        .item-price { font-size: .9rem; color: var(--accent2); font-weight: 700; }
+        .item-desc { font-size: .82rem; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 400px; margin-top: 3px; }
+        .item-badges { display: flex; gap: 6px; align-items: center; }
+        .badge-veg { display: inline-flex; align-items: center; gap: 4px; font-size: .72rem; color: var(--veg); background: rgba(76,175,80,0.1); border: 1px solid rgba(76,175,80,0.3); padding: 2px 8px; border-radius: 20px; }
+        .badge-nonveg { display: inline-flex; align-items: center; gap: 4px; font-size: .72rem; color: var(--nonveg); background: rgba(229,57,53,0.1); border: 1px solid rgba(229,57,53,0.3); padding: 2px 8px; border-radius: 20px; }
+        .badge-label { font-size: .72rem; background: rgba(245,166,35,0.15); color: var(--accent2); border: 1px solid rgba(245,166,35,0.3); padding: 2px 8px; border-radius: 20px; }
+        .item-actions { display: flex; gap: 8px; flex-shrink: 0; }
+        .action-btn { width: 34px; height: 34px; border-radius: 8px; border: 1px solid var(--border); background: var(--card); color: var(--muted); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all .2s; }
+        .action-btn.edit:hover { border-color: var(--accent2); color: var(--accent2); background: rgba(245,166,35,0.1); }
+        .action-btn.delete:hover { border-color: var(--danger); color: var(--danger); background: rgba(229,57,53,0.1); }
+        .toggle-switch { position: relative; width: 40px; height: 22px; }
+        .toggle-switch input { opacity: 0; width: 0; height: 0; }
+        .toggle-slider { position: absolute; inset: 0; background: var(--border); border-radius: 22px; cursor: pointer; transition: .3s; }
+        .toggle-slider::before { content: ''; position: absolute; width: 16px; height: 16px; left: 3px; top: 3px; background: white; border-radius: 50%; transition: .3s; }
+        .toggle-switch input:checked + .toggle-slider { background: var(--success); }
+        .toggle-switch input:checked + .toggle-slider::before { transform: translateX(18px); }
+        .empty-state { text-align: center; padding: 60px 20px; color: var(--muted); }
+        .empty-state .empty-icon { font-size: 3.5rem; margin-bottom: 14px; }
+        .empty-state p { font-size: .95rem; }
+
+        /* SETTINGS PANEL */
+        .settings-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .settings-card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 22px; }
+        .settings-card h4 { font-weight: 600; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; font-size: 1rem; }
+
+        /* TOAST */
+        .toast { position: fixed; bottom: 24px; right: 24px; background: var(--success); color: white; padding: 12px 22px; border-radius: 50px; font-size: .9rem; font-weight: 600; z-index: 99999; transform: translateY(80px); opacity: 0; transition: all .3s; box-shadow: 0 4px 20px rgba(0,0,0,.3); }
+        .toast.show { transform: translateY(0); opacity: 1; }
+        .toast.error { background: var(--danger); }
+
+        /* CONFIRM DIALOG */
+        .confirm-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.7); z-index: 9998; display: flex; align-items: center; justify-content: center; opacity: 0; visibility: hidden; transition: all .2s; }
+        .confirm-overlay.open { opacity: 1; visibility: visible; }
+        .confirm-box { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 28px; max-width: 360px; width: 90%; text-align: center; }
+        .confirm-box h3 { font-family: 'Playfair Display', serif; font-size: 1.3rem; margin-bottom: 10px; }
+        .confirm-box p { color: var(--muted); font-size: .9rem; margin-bottom: 22px; }
+        .confirm-actions { display: flex; gap: 10px; justify-content: center; }
+        .confirm-yes { padding: 10px 24px; background: var(--danger); color: white; border: none; border-radius: 10px; font-size: .9rem; font-weight: 600; cursor: pointer; font-family: 'DM Sans', sans-serif; }
+        .confirm-no { padding: 10px 24px; background: transparent; color: var(--muted); border: 1px solid var(--border); border-radius: 10px; font-size: .9rem; cursor: pointer; font-family: 'DM Sans', sans-serif; }
+
+        @media (max-width: 900px) {
+            .sidebar { width: 200px; }
+            .main-content { margin-left: 200px; }
+            .stats-row { grid-template-columns: 1fr 1fr; }
+            .settings-grid { grid-template-columns: 1fr; }
+        }
+        @media (max-width: 640px) {
+            .sidebar { transform: translateX(-100%); transition: transform .3s; }
+            .sidebar.open { transform: translateX(0); }
+            .main-content { margin-left: 0; }
+            .form-grid, .form-grid.three { grid-template-columns: 1fr; }
+            .stats-row { grid-template-columns: 1fr 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- LOGIN SCREEN -->
+<div class="login-screen" id="loginScreen">
+    <div class="login-box">
+        <div style="font-size:2.5rem;margin-bottom:12px;">🍛</div>
+        <h1>SPICE GARDEN</h1>
+        <p>Admin Panel — Restaurant Owner Login</p>
+        <input type="text" id="loginUser" placeholder="Username" autocomplete="off">
+        <input type="password" id="loginPass" placeholder="Password">
+        <button class="login-btn" onclick="doLogin()">Login</button>
+        <div class="login-error" id="loginError">❌ Wrong username or password</div>
+        <p style="font-size:.75rem;color:var(--muted);margin-top:14px;">Demo: admin / admin123</p>
+    </div>
+</div>
+
+<!-- CONFIRM DIALOG -->
+<div class="confirm-overlay" id="confirmOverlay">
+    <div class="confirm-box">
+        <div style="font-size:2rem;margin-bottom:10px;">🗑️</div>
+        <h3>Delete Item?</h3>
+        <p id="confirmMsg">This action cannot be undone.</p>
+        <div class="confirm-actions">
+            <button class="confirm-yes" id="confirmYes">Yes, Delete</button>
+            <button class="confirm-no" onclick="closeConfirm()">Cancel</button>
+        </div>
+    </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<!-- ADMIN LAYOUT -->
+<div class="admin-layout" id="adminLayout" style="display:none;">
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+        <div class="sidebar-logo">
+            <h2>SPICE GARDEN</h2>
+            <span>Admin Panel</span>
+        </div>
+        <nav class="sidebar-nav">
+            <button class="nav-item active" onclick="showPanel('dashboard')">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+                Dashboard
+            </button>
+            <button class="nav-item" onclick="showPanel('menu')">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="2"/></svg>
+                Menu Items
+            </button>
+            <button class="nav-item" onclick="showPanel('add')">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+                Add Item
+            </button>
+            <button class="nav-item" onclick="showPanel('settings')">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/></svg>
+                Settings
+            </button>
+        </nav>
+        <div class="sidebar-footer">
+            <button class="preview-btn" onclick="window.open('index.html','_blank')">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                Preview Store
+            </button>
+            <button class="logout-btn" onclick="doLogout()">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                Logout
+            </button>
+        </div>
+    </aside>
+
+    <!-- MAIN -->
+    <main class="main-content">
+
+        <!-- DASHBOARD PANEL -->
+        <div class="panel active" id="panel-dashboard">
+            <div class="topbar">
+                <div>
+                    <h1>Dashboard 👋</h1>
+                    <p style="color:var(--muted);font-size:.9rem;margin-top:4px;">Welcome back! Here's your menu overview.</p>
+                </div>
+            </div>
+            <div class="stats-row" id="statsRow"></div>
+            <div class="form-card">
+                <h3>📋 Recent Menu Items</h3>
+                <div id="recentItems"></div>
+            </div>
+        </div>
+
+        <!-- MENU PANEL -->
+        <div class="panel" id="panel-menu">
+            <div class="topbar">
+                <h1>Menu Items</h1>
+                <button class="add-item-btn" onclick="showPanel('add')">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                    Add New Item
+                </button>
+            </div>
+            <div class="menu-toolbar">
+                <div style="display:flex;gap:10px;flex-wrap:wrap;">
+                    <div class="search-box">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                        <input type="text" id="searchInput" placeholder="Search items..." oninput="renderMenuList()">
+                    </div>
+                </div>
+                <div class="cat-filter" id="catFilter"></div>
+            </div>
+            <div class="menu-list" id="menuList"></div>
+        </div>
+
+        <!-- ADD / EDIT PANEL -->
+        <div class="panel" id="panel-add">
+            <div class="topbar">
+                <h1 id="formTitle">Add New Item</h1>
+            </div>
+            <div class="form-card">
+                <h3 id="formSubtitle">🍽️ Item Details</h3>
+                <div class="form-grid">
+                    <div>
+                        <div class="field-label">Item Name *</div>
+                        <input class="field-input" id="f-name" placeholder="e.g. Chicken Biryani">
+                    </div>
+                    <div>
+                        <div class="field-label">Price (₹) *</div>
+                        <input class="field-input" id="f-price" type="number" placeholder="e.g. 149">
+                    </div>
+                    <div>
+                        <div class="field-label">Category *</div>
+                        <select class="field-input" id="f-category">
+                            <option value="">Select category</option>
+                            <option value="starters">Starters</option>
+                            <option value="rice">Rice & Biryani</option>
+                            <option value="curries">Curries</option>
+                            <option value="breads">Breads</option>
+                            <option value="beverages">Beverages</option>
+                            <option value="desserts">Desserts</option>
+                        </select>
+                    </div>
+                    <div>
+                        <div class="field-label">Emoji / Icon</div>
+                        <input class="field-input" id="f-emoji" placeholder="e.g. 🍛" maxlength="4">
+                    </div>
+                    <div>
+                        <div class="field-label">Badge Label (optional)</div>
+                        <input class="field-input" id="f-badge" placeholder="e.g. Chef Special, New, Today Only">
+                    </div>
+                    <div>
+                        <div class="field-label">Veg / Non-Veg *</div>
+                        <div class="veg-toggle">
+                            <button class="veg-opt" id="vegBtn" onclick="setVeg(true)">🟢 Veg</button>
+                            <button class="veg-opt" id="nonvegBtn" onclick="setVeg(false)">🔴 Non-Veg</button>
+                        </div>
+                    </div>
+                    <div class="form-full">
+                        <div class="field-label">Description *</div>
+                        <textarea class="field-input" id="f-desc" placeholder="Describe the dish — ingredients, taste, how it's served..."></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-card">
+                <h3>➕ Add-ons (optional)</h3>
+                <p style="color:var(--muted);font-size:.85rem;margin-bottom:16px;">Add extras customers can choose — like extra gravy, sides, toppings.</p>
+                <div class="addon-builder" id="addonBuilder"></div>
+                <button class="add-addon-btn" onclick="addAddonRow()">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                    Add another add-on
+                </button>
+            </div>
+
+            <div class="form-actions">
+                <button class="btn-save" onclick="saveItem()">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+                    Save Item
+                </button>
+                <button class="btn-cancel" onclick="cancelEdit()">Cancel</button>
+            </div>
+        </div>
+
+        <!-- SETTINGS PANEL -->
+        <div class="panel" id="panel-settings">
+            <div class="topbar"><h1>Restaurant Settings</h1></div>
+            <div class="settings-grid">
+                <div class="settings-card">
+                    <h4>🏪 Restaurant Info</h4>
+                    <div style="display:flex;flex-direction:column;gap:12px;">
+                        <div><div class="field-label">Restaurant Name</div><input class="field-input" id="s-name" placeholder="Spice Garden"></div>
+                        <div><div class="field-label">Tagline</div><input class="field-input" id="s-tagline" placeholder="Authentic Flavours"></div>
+                        <div><div class="field-label">WhatsApp Number</div><input class="field-input" id="s-whatsapp" placeholder="919876543210"></div>
+                        <div><div class="field-label">Phone</div><input class="field-input" id="s-phone" placeholder="+91 98765 43210"></div>
+                        <div><div class="field-label">Address</div><input class="field-input" id="s-address" placeholder="12 Main Road, Tamil Nadu"></div>
+                        <div><div class="field-label">Hours</div><input class="field-input" id="s-hours" placeholder="Mon–Sun: 8 AM – 10 PM"></div>
+                        <button class="btn-save" onclick="saveSettings()" style="margin-top:4px;">Save Settings</button>
+                    </div>
+                </div>
+                <div class="settings-card">
+                    <h4>🚚 Delivery Settings</h4>
+                    <div style="display:flex;flex-direction:column;gap:12px;">
+                        <div><div class="field-label">Delivery Fee (₹)</div><input class="field-input" id="s-delivery" type="number" placeholder="40"></div>
+                        <div><div class="field-label">Free Delivery Above (₹)</div><input class="field-input" id="s-freeabove" type="number" placeholder="299"></div>
+                        <div><div class="field-label">Banner Text (scrolling)</div><input class="field-input" id="s-banner" placeholder="Today's Special: Biryani at ₹149"></div>
+                        <button class="btn-save" onclick="saveSettings()" style="margin-top:4px;">Save Settings</button>
+                    </div>
+                </div>
+                <div class="settings-card">
+                    <h4>🎁 Offers</h4>
+                    <div style="display:flex;flex-direction:column;gap:12px;">
+                        <div><div class="field-label">Offer 1 Title</div><input class="field-input" id="s-o1title" placeholder="20% Off First Order"></div>
+                        <div><div class="field-label">Offer 1 Code</div><input class="field-input" id="s-o1code" placeholder="FIRST20"></div>
+                        <div><div class="field-label">Offer 2 Title</div><input class="field-input" id="s-o2title" placeholder="Weekend Combo"></div>
+                        <div><div class="field-label">Offer 2 Code</div><input class="field-input" id="s-o2code" placeholder="WKND249"></div>
+                        <button class="btn-save" onclick="saveSettings()" style="margin-top:4px;">Save Settings</button>
+                    </div>
+                </div>
+                <div class="settings-card">
+                    <h4>🔐 Change Password</h4>
+                    <div style="display:flex;flex-direction:column;gap:12px;">
+                        <div><div class="field-label">Current Password</div><input class="field-input" type="password" id="s-oldpass" placeholder="Current password"></div>
+                        <div><div class="field-label">New Password</div><input class="field-input" type="password" id="s-newpass" placeholder="New password"></div>
+                        <div><div class="field-label">Confirm Password</div><input class="field-input" type="password" id="s-confirmpass" placeholder="Confirm new password"></div>
+                        <button class="btn-save" onclick="changePassword()" style="margin-top:4px;">Change Password</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </main>
+</div>
+
+<script>
+// ── AUTH ──
+const ADMIN_USER = 'admin';
+let adminPass = localStorage.getItem('adminPass') || 'admin123';
+
+function doLogin() {
+    const u = document.getElementById('loginUser').value.trim();
+    const p = document.getElementById('loginPass').value.trim();
+    if (u === ADMIN_USER && p === adminPass) {
+        document.getElementById('loginScreen').style.display = 'none';
+        document.getElementById('adminLayout').style.display = 'flex';
+        initAdmin();
+    } else {
+        document.getElementById('loginError').style.display = 'block';
+        setTimeout(() => document.getElementById('loginError').style.display = 'none', 3000);
+    }
+}
+document.getElementById('loginPass').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
+
+function doLogout() {
+    document.getElementById('loginScreen').style.display = 'flex';
+    document.getElementById('adminLayout').style.display = 'none';
+    document.getElementById('loginUser').value = '';
+    document.getElementById('loginPass').value = '';
+}
+
+// ── DATA ──
+const STORAGE_KEY = 'spicegarden_menu';
+const SETTINGS_KEY = 'spicegarden_settings';
+
+const defaultItems = [
+    {id:1,name:'Chicken Biryani',category:'rice',price:149,badge:'Today Special',veg:false,emoji:'🍗',desc:'Aromatic basmati rice layered with tender chicken, saffron, and secret spices.',addons:[{name:'Extra Raita',price:20},{name:'Extra Gravy',price:30}],active:true},
+    {id:2,name:'Veg Biryani',category:'rice',price:119,badge:'',veg:true,emoji:'🌿',desc:'Fragrant rice with fresh vegetables, fried onions, and whole spices.',addons:[{name:'Extra Raita',price:20}],active:true},
+    {id:3,name:'Onion Pakoda',category:'starters',price:59,badge:'Crispy',veg:true,emoji:'🧅',desc:'Crispy golden fritters made with onions, chilli, and besan.',addons:[{name:'Extra Chutney',price:10}],active:true},
+    {id:4,name:'Chicken 65',category:'starters',price:129,badge:'🔥 Spicy',veg:false,emoji:'🍖',desc:'Deep-fried chicken marinated in red spices and curry leaves.',addons:[{name:'Extra Sauce',price:15}],active:true},
+    {id:5,name:'Paneer Butter Masala',category:'curries',price:139,badge:'',veg:true,emoji:'🧀',desc:'Soft paneer in creamy tomato-butter gravy.',addons:[{name:'Extra Gravy',price:30}],active:true},
+    {id:6,name:'Filter Coffee',category:'beverages',price:39,badge:'',veg:true,emoji:'☕',desc:'Traditional South Indian filter coffee served hot.',addons:[],active:true},
+];
+
+function getItems() {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    return stored ? JSON.parse(stored) : defaultItems;
+}
+function saveItems(items) { localStorage.setItem(STORAGE_KEY, JSON.stringify(items)); }
+function getSettings() {
+    const s = localStorage.getItem(SETTINGS_KEY);
+    return s ? JSON.parse(s) : {};
+}
+function saveSettingsData(data) { localStorage.setItem(SETTINGS_KEY, JSON.stringify(data)); }
+
+// ── PANEL NAVIGATION ──
+function showPanel(name) {
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    document.getElementById(`panel-${name}`).classList.add('active');
+    document.querySelectorAll('.nav-item').forEach(n => {
+        if (n.getAttribute('onclick')?.includes(name)) n.classList.add('active');
+    });
+    if (name === 'dashboard') renderDashboard();
+    if (name === 'menu') renderMenuList();
+    if (name === 'add') { resetForm(); }
+    if (name === 'settings') loadSettings();
+}
+
+// ── DASHBOARD ──
+function renderDashboard() {
+    const items = getItems();
+    const cats = [...new Set(items.map(i => i.category))];
+    const active = items.filter(i => i.active).length;
+    const vegCount = items.filter(i => i.veg).length;
+
+    document.getElementById('statsRow').innerHTML = `
+        <div class="stat-card"><div class="stat-label">Total Items</div><div class="stat-value">${items.length}</div><div class="stat-sub">${active} active</div></div>
+        <div class="stat-card"><div class="stat-label">Categories</div><div class="stat-value">${cats.length}</div><div class="stat-sub">${cats.join(', ')}</div></div>
+        <div class="stat-card"><div class="stat-label">Veg Items</div><div class="stat-value">${vegCount}</div><div class="stat-sub">${items.length-vegCount} non-veg</div></div>
+        <div class="stat-card"><div class="stat-label">Avg Price</div><div class="stat-value">₹${Math.round(items.reduce((s,i)=>s+i.price,0)/items.length)||0}</div><div class="stat-sub">across menu</div></div>
+    `;
+
+    document.getElementById('recentItems').innerHTML = items.slice(-5).reverse().map(item => `
+        <div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border);">
+            <span style="font-size:1.8rem;">${item.emoji}</span>
+            <div style="flex:1;">
+                <div style="font-weight:600;font-size:.92rem;">${item.name}</div>
+                <div style="font-size:.8rem;color:var(--muted);">${item.category} · ₹${item.price}</div>
+            </div>
+            <div class="${item.veg?'badge-veg':'badge-nonveg'}">${item.veg?'🟢 Veg':'🔴 Non-Veg'}</div>
+        </div>`).join('') || '<p style="color:var(--muted);font-size:.9rem;">No items yet.</p>';
+}
+
+// ── MENU LIST ──
+let filterCat = 'all';
+
+function renderMenuList() {
+    const items = getItems();
+    const search = document.getElementById('searchInput')?.value?.toLowerCase() || '';
+    const cats = ['all', ...new Set(items.map(i => i.category))];
+
+    document.getElementById('catFilter').innerHTML = cats.map(c =>
+        `<button class="cat-pill ${c===filterCat?'active':''}" onclick="setCatFilter('${c}')">${c==='all'?'All':c.charAt(0).toUpperCase()+c.slice(1)}</button>`
+    ).join('');
+
+    const filtered = items.filter(i => {
+        const matchCat = filterCat === 'all' || i.category === filterCat;
+        const matchSearch = !search || i.name.toLowerCase().includes(search) || i.desc.toLowerCase().includes(search);
+        return matchCat && matchSearch;
+    });
+
+    if (!filtered.length) {
+        document.getElementById('menuList').innerHTML = `<div class="empty-state"><div class="empty-icon">🍽️</div><p>No items found.<br>Try a different search or category.</p></div>`;
+        return;
+    }
+
+    document.getElementById('menuList').innerHTML = filtered.map(item => `
+        <div class="menu-item-row">
+            <div class="item-emoji">${item.emoji}</div>
+            <div class="item-details">
+                <div class="item-name">${item.name}</div>
+                <div class="item-meta">
+                    <span class="item-cat">${item.category}</span>
+                    <span class="item-price">₹${item.price}</span>
+                    <span class="${item.veg?'badge-veg':'badge-nonveg'}">${item.veg?'🟢 Veg':'🔴 Non-Veg'}</span>
+                    ${item.badge?`<span class="badge-label">${item.badge}</span>`:''}
+                </div>
+                <div class="item-desc">${item.desc}</div>
+            </div>
+            <div class="item-actions">
+                <label class="toggle-switch" title="${item.active?'Active':'Hidden'}">
+                    <input type="checkbox" ${item.active?'checked':''} onchange="toggleActive(${item.id})">
+                    <span class="toggle-slider"></span>
+                </label>
+                <button class="action-btn edit" title="Edit" onclick="editItem(${item.id})">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                </button>
+                <button class="action-btn delete" title="Delete" onclick="confirmDelete(${item.id}, '${item.name}')">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+                </button>
+            </div>
+        </div>`).join('');
+}
+
+function setCatFilter(cat) { filterCat = cat; renderMenuList(); }
+
+function toggleActive(id) {
+    const items = getItems();
+    const item = items.find(i => i.id === id);
+    if (item) { item.active = !item.active; saveItems(items); showToast(item.active ? '✅ Item shown on menu' : '👁️ Item hidden from menu'); }
+}
+
+// ── ADD / EDIT FORM ──
+let editingId = null;
+let isVeg = null;
+
+function resetForm() {
+    editingId = null; isVeg = null;
+    ['f-name','f-price','f-emoji','f-badge','f-desc'].forEach(id => document.getElementById(id).value = '');
+    document.getElementById('f-category').value = '';
+    document.getElementById('vegBtn').className = 'veg-opt';
+    document.getElementById('nonvegBtn').className = 'veg-opt';
+    document.getElementById('addonBuilder').innerHTML = '';
+    document.getElementById('formTitle').textContent = 'Add New Item';
+    document.getElementById('formSubtitle').textContent = '🍽️ Item Details';
+}
+
+function setVeg(v) {
+    isVeg = v;
+    document.getElementById('vegBtn').className = v ? 'veg-opt veg-selected' : 'veg-opt';
+    document.getElementById('nonvegBtn').className = !v ? 'veg-opt nonveg-selected' : 'veg-opt';
+}
+
+function addAddonRow(name='', price='') {
+    const row = document.createElement('div');
+    row.className = 'addon-row';
+    row.innerHTML = `
+        <input class="field-input" placeholder="Add-on name (e.g. Extra Gravy)" value="${name}">
+        <input class="field-input price-input" type="number" placeholder="₹ Price" value="${price}">
+        <button class="remove-addon" onclick="this.parentElement.remove()">×</button>`;
+    document.getElementById('addonBuilder').appendChild(row);
+}
+
+function saveItem() {
+    const name = document.getElementById('f-name').value.trim();
+    const price = parseInt(document.getElementById('f-price').value);
+    const category = document.getElementById('f-category').value;
+    const emoji = document.getElementById('f-emoji').value.trim() || '🍽️';
+    const badge = document.getElementById('f-badge').value.trim();
+    const desc = document.getElementById('f-desc').value.trim();
+
+    if (!name) { showToast('❌ Item name is required', true); return; }
+    if (!price || price <= 0) { showToast('❌ Valid price is required', true); return; }
+    if (!category) { showToast('❌ Please select a category', true); return; }
+    if (isVeg === null) { showToast('❌ Please select Veg or Non-Veg', true); return; }
+    if (!desc) { showToast('❌ Description is required', true); return; }
+
+    const addonRows = document.querySelectorAll('#addonBuilder .addon-row');
+    const addons = [];
+    addonRows.forEach(row => {
+        const inputs = row.querySelectorAll('input');
+        const aName = inputs[0].value.trim();
+        const aPrice = parseInt(inputs[1].value) || 0;
+        if (aName) addons.push({name: aName, price: aPrice});
+    });
+
+    const items = getItems();
+    if (editingId) {
+        const idx = items.findIndex(i => i.id === editingId);
+        if (idx > -1) items[idx] = {...items[idx], name, price, category, emoji, badge, veg: isVeg, desc, addons};
+        showToast('✅ Item updated successfully!');
+    } else {
+        const newId = Date.now();
+        items.push({id: newId, name, price, category, emoji, badge, veg: isVeg, desc, addons, active: true});
+        showToast('✅ Item added to menu!');
+    }
+    saveItems(items);
+    showPanel('menu');
+}
+
+function editItem(id) {
+    const items = getItems();
+    const item = items.find(i => i.id === id);
+    if (!item) return;
+    editingId = id;
+    showPanel('add');
+    document.getElementById('formTitle').textContent = 'Edit Item';
+    document.getElementById('formSubtitle').textContent = '✏️ Update Item Details';
+    document.getElementById('f-name').value = item.name;
+    document.getElementById('f-price').value = item.price;
+    document.getElementById('f-category').value = item.category;
+    document.getElementById('f-emoji').value = item.emoji;
+    document.getElementById('f-badge').value = item.badge;
+    document.getElementById('f-desc').value = item.desc;
+    setVeg(item.veg);
+    document.getElementById('addonBuilder').innerHTML = '';
+    item.addons.forEach(a => addAddonRow(a.name, a.price));
+}
+
+function cancelEdit() { editingId = null; showPanel('menu'); }
+
+// ── DELETE ──
+let deleteId = null;
+function confirmDelete(id, name) {
+    deleteId = id;
+    document.getElementById('confirmMsg').textContent = `Delete "${name}"? This cannot be undone.`;
+    document.getElementById('confirmOverlay').classList.add('open');
+}
+function closeConfirm() { document.getElementById('confirmOverlay').classList.remove('open'); deleteId = null; }
+document.getElementById('confirmYes').addEventListener('click', () => {
+    if (!deleteId) return;
+    const items = getItems().filter(i => i.id !== deleteId);
+    saveItems(items);
+    closeConfirm();
+    renderMenuList();
+    showToast('🗑️ Item deleted');
+});
+
+// ── SETTINGS ──
+function loadSettings() {
+    const s = getSettings();
+    document.getElementById('s-name').value = s.name || 'Spice Garden';
+    document.getElementById('s-tagline').value = s.tagline || 'Authentic Flavours';
+    document.getElementById('s-whatsapp').value = s.whatsapp || '919876543210';
+    document.getElementById('s-phone').value = s.phone || '+91 98765 43210';
+    document.getElementById('s-address').value = s.address || '12 Main Road, Tamil Nadu';
+    document.getElementById('s-hours').value = s.hours || 'Mon–Sun: 8 AM – 10 PM';
+    document.getElementById('s-delivery').value = s.delivery || 40;
+    document.getElementById('s-freeabove').value = s.freeabove || 299;
+    document.getElementById('s-banner').value = s.banner || "Today's Special: Biryani at ₹149";
+    document.getElementById('s-o1title').value = s.o1title || '20% Off First Order';
+    document.getElementById('s-o1code').value = s.o1code || 'FIRST20';
+    document.getElementById('s-o2title').value = s.o2title || 'Weekend Combo';
+    document.getElementById('s-o2code').value = s.o2code || 'WKND249';
+}
+
+function saveSettings() {
+    saveSettingsData({
+        name: document.getElementById('s-name').value,
+        tagline: document.getElementById('s-tagline').value,
+        whatsapp: document.getElementById('s-whatsapp').value,
+        phone: document.getElementById('s-phone').value,
+        address: document.getElementById('s-address').value,
+        hours: document.getElementById('s-hours').value,
+        delivery: document.getElementById('s-delivery').value,
+        freeabove: document.getElementById('s-freeabove').value,
+        banner: document.getElementById('s-banner').value,
+        o1title: document.getElementById('s-o1title').value,
+        o1code: document.getElementById('s-o1code').value,
+        o2title: document.getElementById('s-o2title').value,
+        o2code: document.getElementById('s-o2code').value,
+    });
+    showToast('✅ Settings saved!');
+}
+
+function changePassword() {
+    const old = document.getElementById('s-oldpass').value;
+    const nw = document.getElementById('s-newpass').value;
+    const cn = document.getElementById('s-confirmpass').value;
+    if (old !== adminPass) { showToast('❌ Current password is wrong', true); return; }
+    if (!nw) { showToast('❌ New password cannot be empty', true); return; }
+    if (nw !== cn) { showToast('❌ Passwords do not match', true); return; }
+    adminPass = nw;
+    localStorage.setItem('adminPass', nw);
+    document.getElementById('s-oldpass').value = '';
+    document.getElementById('s-newpass').value = '';
+    document.getElementById('s-confirmpass').value = '';
+    showToast('✅ Password changed!');
+}
+
+// ── TOAST ──
+function showToast(msg, isError = false) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className = `toast ${isError ? 'error' : ''} show`;
+    setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+// ── INIT ──
+function initAdmin() { renderDashboard(); }
+if (localStorage.getItem('adminLoggedIn')) { document.getElementById('loginScreen').style.display = 'none'; document.getElementById('adminLayout').style.display = 'flex'; initAdmin(); }
+</script>
+</body>
+</html>
