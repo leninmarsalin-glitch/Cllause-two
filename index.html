@@ -596,8 +596,13 @@ const defaultItems = [
 
 function getMenuItems() {
     const stored = localStorage.getItem(STORAGE_KEY);
-    const items = stored ? JSON.parse(stored) : defaultItems;
-    return items.filter(i => i.active !== false); // only show active items
+    if (!stored) {
+        // First visit — seed localStorage with defaults
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(defaultItems));
+        return defaultItems;
+    }
+    const items = JSON.parse(stored);
+    return items.filter(i => i.active !== false);
 }
 
 function getRestaurantSettings() {
