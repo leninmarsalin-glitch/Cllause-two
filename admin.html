@@ -447,7 +447,11 @@ const defaultItems = [
 
 function getItems() {
     const stored = localStorage.getItem(STORAGE_KEY);
-    return stored ? JSON.parse(stored) : defaultItems;
+    if (!stored) {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(defaultItems));
+        return defaultItems;
+    }
+    return JSON.parse(stored);
 }
 function saveItems(items) { localStorage.setItem(STORAGE_KEY, JSON.stringify(items)); }
 function getSettings() {
